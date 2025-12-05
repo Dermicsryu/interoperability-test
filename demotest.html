@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多功能交互演示</title>
+  <!-- 引入Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入Font Awesome图标 -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 自定义Tailwind配置（清新色调优化） -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3B82F6', // 主色调：清新蓝色
+            secondary: '#10B981', // 辅助色：清新绿色
+            accent: '#F97316', // 强调色：暖橙色
+            dark: '#1E293B', // 加深文字色，提升可见性
+            light: '#FFFFFF'
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'bounce-slow': 'bounce 2s infinite',
+            'float': 'float 3s ease-in-out infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' },
+            }
+          }
+        },
+      }
+    }
+  </script>
+  
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .glass {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+      .transition-all-300 {
+        transition: all 0.3s ease;
+      }
+      .rotate-hover {
+        transition: transform 0.3s ease;
+      }
+      .rotate-hover:hover {
+        transform: rotate(5deg) scale(1.05);
+      }
+      /* 形状工具类 */
+      .shape-triangle {
+        clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+      }
+      .shape-diamond {
+        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      }
+      .shape-hexagon {
+        clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+      }
+      .shape-pentagon {
+        clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+      }
+      .shape-trapezoid {
+        clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+      }
+      .shape-star {
+        clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+      }
+    }
+  </style>
+  
+  <style>
+    /* 基础样式（清新风格优化） */
+    body {
+      overflow-x: hidden;
+      background-color: #F0F9FF;
+      background-image: 
+        radial-gradient(circle at 25% 10%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 75% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+    }
+    
+    /* 拖动元素样式 */
+    .draggable {
+      cursor: grab;
+      transition: none;
+      will-change: transform, left, top;
+    }
+    .draggable:active {
+      cursor: grabbing;
+    }
+    
+    /* 虚拟键盘样式（放大按钮） */
+    .key {
+      transition: all 0.1s ease;
+      font-size: 1.1rem; /* 放大字体 */
+      padding: 1rem 0 !important; /* 增加内边距，放大按钮 */
+    }
+    .key:active {
+      transform: scale(0.95);
+      background-color: rgba(59, 130, 246, 0.8);
+      color: white;
+    }
+    
+    /* 滚动条样式 */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(59, 130, 246, 0.05);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(59, 130, 246, 0.3);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(59, 130, 246, 0.5);
+    }
+    
+    /* 形状动画 */
+    .shape-transition {
+      transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+  </style>
+</head>
+<body class="font-inter text-dark min-h-screen flex flex-col">
+  <!-- 顶部导航 -->
+  <header class="glass border-b border-gray-200 py-4 px-6 md:px-12 sticky top-0 z-50">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+        交互演示平台
+      </h1>
+      <div class="flex items-center gap-4">
+        <button class="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-all-300 text-primary">
+          <i class="fa fa-question-circle"></i>
+          <span>帮助</span>
+        </button>
+        <button class="px-4 py-2 rounded-full bg-primary hover:bg-primary/90 transition-all-300 flex items-center gap-2 text-white">
+          <i class="fa fa-github"></i>
+          <span class="hidden md:inline">查看源码</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="flex-grow container mx-auto py-12 px-6 md:px-12">
+    <!-- 功能选择卡片 -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+      <!-- 功能卡片1：拖拽切换 -->
+      <div class="glass rounded-2xl p-6 border border-gray-200 hover:border-primary/30 transition-all-300 rotate-hover group">
+        <div class="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-all-300">
+          <i class="fa fa-arrows text-2xl text-primary"></i>
+        </div>
+        <h2 class="text-xl font-bold mb-3">拖拽切换功能</h2>
+        <p class="text-gray-700 mb-6 font-medium">左键点击切换颜色，右键点击切换形状，拖拽移动元素</p>
+        <button id="feature1Btn" class="w-full py-3 rounded-xl bg-primary hover:bg-primary/90 transition-all-300 flex items-center justify-center gap-2 font-medium text-white">
+          <span>开始体验</span>
+          <i class="fa fa-arrow-right"></i>
+        </button>
+      </div>
+
+      <!-- 功能卡片2：形状控制 -->
+      <div class="glass rounded-2xl p-6 border border-gray-200 hover:border-secondary/30 transition-all-300 rotate-hover group">
+        <div class="w-16 h-16 bg-secondary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-secondary/20 transition-all-300">
+          <i class="fa fa-cube text-2xl text-secondary"></i>
+        </div>
+        <h2 class="text-xl font-bold mb-3">形状控制功能</h2>
+        <p class="text-gray-700 mb-6 font-medium">滚轮控制上下移动，方向键 ← →切换形状</p>
+        <button id="feature2Btn" class="w-full py-3 rounded-xl bg-secondary hover:bg-secondary/90 transition-all-300 flex items-center justify-center gap-2 font-medium text-white">
+          <span>开始体验</span>
+          <i class="fa fa-arrow-right"></i>
+        </button>
+      </div>
+
+      <!-- 功能卡片3：虚拟键盘 -->
+      <div class="glass rounded-2xl p-6 border border-gray-200 hover:border-accent/30 transition-all-300 rotate-hover group">
+        <div class="w-16 h-16 bg-accent/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-accent/20 transition-all-300">
+          <i class="fa fa-keyboard-o text-2xl text-accent"></i>
+        </div>
+        <h2 class="text-xl font-bold mb-3">虚拟键盘功能</h2>
+        <p class="text-gray-700 mb-6 font-medium">点击虚拟键盘输入文本，支持基础编辑操作</p>
+        <button id="feature3Btn" class="w-full py-3 rounded-xl bg-accent hover:bg-accent/90 transition-all-300 flex items-center justify-center gap-2 font-medium text-white">
+          <span>开始体验</span>
+          <i class="fa fa-arrow-right"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- 功能演示区域 -->
+    <section id="demoArea" class="hidden">
+      <!-- 演示区域头部 -->
+      <div class="flex justify-between items-center mb-8">
+        <h2 id="demoTitle" class="text-2xl md:text-3xl font-bold text-shadow text-dark"></h2>
+        <button id="backBtn" class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all-300 flex items-center gap-2 text-gray-800 font-medium">
+          <i class="fa fa-arrow-left"></i>
+          <span>返回</span>
+        </button>
+      </div>
+
+      <!-- 功能1：拖拽切换演示 -->
+      <div id="demo1" class="hidden">
+        <div class="glass rounded-2xl p-8 border border-gray-200 min-h-[500px] flex flex-col">
+          <div class="mb-6">
+            <h3 class="text-xl font-semibold mb-2 text-dark">拖拽切换演示</h3>
+            <p class="text-gray-700 font-medium">• 左键点击方框切换颜色<br>• 右键点击方框切换形状（三角形、菱形、六边形等）<br>• 按住鼠标拖拽移动元素</p>
+          </div>
+          <div class="flex-grow flex items-center justify-center relative" id="dragContainer" style="position: relative; width: 100%; height: 100%;">
+            <div id="draggableBox" class="draggable w-32 h-32 bg-primary rounded-xl shape-transition shadow-lg shadow-primary/20" 
+                 style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 功能2：形状控制演示 -->
+      <div id="demo2" class="hidden">
+        <div class="glass rounded-2xl p-8 border border-gray-200 min-h-[500px] flex flex-col">
+          <div class="mb-6">
+            <h3 class="text-xl font-semibold mb-2 text-dark">形状控制演示</h3>
+            <p class="text-gray-700 font-medium">• 鼠标滚轮上下滚动快速控制形状移动（优化速度）<br>• 方向键 → 前进切换下一个形状，← 后退切换上一个形状<br>• 点击"重置位置"恢复初始状态</p>
+          </div>
+          <div class="flex-grow flex items-center justify-center relative" id="shapeContainer">
+            <div id="controllableShape" class="w-32 h-32 bg-secondary rounded-xl shape-transition shadow-lg shadow-secondary/20" 
+                 style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+          </div>
+          <div class="mt-6 flex justify-center">
+            <button id="resetShapeBtn" class="px-6 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all-300 text-gray-800 font-medium">
+              重置位置
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 功能3：虚拟键盘演示 -->
+      <div id="demo3" class="hidden">
+        <div class="glass rounded-2xl p-8 border border-gray-200 min-h-[500px] flex flex-col">
+          <div class="mb-6">
+            <h3 class="text-xl font-semibold mb-2 text-dark">虚拟键盘演示</h3>
+            <p class="text-gray-700 font-medium">点击下方虚拟键盘输入文本，支持大小写切换和删除操作</p>
+          </div>
+          
+          <!-- 文本输入框 -->
+          <div class="mb-8">
+            <textarea id="textInput" class="w-full p-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:outline-none h-32 resize-none font-medium text-gray-800" 
+                      placeholder="点击虚拟键盘输入文本..."></textarea>
+          </div>
+          
+          <!-- 虚拟键盘（放大按钮） -->
+          <div id="virtualKeyboard" class="grid grid-cols-10 gap-3 w-full max-w-4xl mx-auto">
+            <!-- 键盘将通过JS动态生成 -->
+          </div>
+          
+          <!-- 功能按钮 -->
+          <div class="mt-6 flex justify-center gap-4">
+            <button id="capsLockBtn" class="px-6 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all-300 text-gray-800 font-medium text-lg">
+              <i class="fa fa-arrow-up"></i> 大写锁定
+            </button>
+            <button id="clearTextBtn" class="px-6 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all-300 text-gray-800 font-medium text-lg">
+              清空文本
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="glass border-t border-gray-200 py-8 px-6 md:px-12">
+    <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="text-gray-700 font-medium">
+        <p>© 2025 交互演示平台 | 设计与开发</p>
+      </div>
+      <div class="flex gap-6">
+        <a href="#" class="text-gray-700 hover:text-primary transition-all-300">
+          <i class="fa fa-wechat text-xl"></i>
+        </a>
+        <a href="#" class="text-gray-700 hover:text-primary transition-all-300">
+          <i class="fa fa-qq text-xl"></i>
+        </a>
+        <a href="#" class="text-gray-700 hover:text-primary transition-all-300">
+          <i class="fa fa-github text-xl"></i>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 脚本 -->
+  <script>
+    // 全局变量
+    let isDragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    let currentColorIndex = 0;
+    let currentShapeIndex = 0;
+    let isCapsLocked = false;
+    
+    // 清新色系颜色数组
+    const colors = [
+      '#3B82F6', // 蓝色
+      '#10B981', // 绿色
+      '#F97316', // 橙色
+      '#8B5CF6', // 紫色
+      '#EC4899', // 粉色
+      '#06B6D4'  // 青色
+    ];
+    
+    // 形状数组
+    const shapes = [
+      'rectangle',    // 矩形
+      'circle',       // 圆形
+      'triangle',     // 三角形
+      'diamond',      // 菱形
+      'hexagon',      // 六边形
+      'pentagon',     // 五边形
+      'trapezoid',    // 梯形
+      'star'          // 五角星
+    ];
+    
+    // 形状类名映射
+    const shapeClasses = {
+      'rectangle': 'rounded-0',
+      'circle': 'rounded-full',
+      'triangle': 'shape-triangle',
+      'diamond': 'shape-diamond',
+      'hexagon': 'shape-hexagon',
+      'pentagon': 'shape-pentagon',
+      'trapezoid': 'shape-trapezoid',
+      'star': 'shape-star'
+    };
+    
+    // 虚拟键盘布局
+    const keyboardLayout = [
+      ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+      ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+      ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';'],
+      ['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/'],
+      [' ', 'BACKSPACE']
+    ];
+    
+    // DOM 元素
+    const feature1Btn = document.getElementById('feature1Btn');
+    const feature2Btn = document.getElementById('feature2Btn');
+    const feature3Btn = document.getElementById('feature3Btn');
+    const backBtn = document.getElementById('backBtn');
+    const demoArea = document.getElementById('demoArea');
+    const demoTitle = document.getElementById('demoTitle');
+    const demo1 = document.getElementById('demo1');
+    const demo2 = document.getElementById('demo2');
+    const demo3 = document.getElementById('demo3');
+    const draggableBox = document.getElementById('draggableBox');
+    const controllableShape = document.getElementById('controllableShape');
+    const shapeContainer = document.getElementById('shapeContainer');
+    const resetShapeBtn = document.getElementById('resetShapeBtn');
+    const textInput = document.getElementById('textInput');
+    const virtualKeyboard = document.getElementById('virtualKeyboard');
+    const capsLockBtn = document.getElementById('capsLockBtn');
+    const clearTextBtn = document.getElementById('clearTextBtn');
+    const dragContainer = document.getElementById('dragContainer');
+
+    function initFeature1() {
+  // ================= 初始化状态 =================
+  currentColorIndex = 0;
+  currentShapeIndex = 0;
+
+  // 初始化样式
+  draggableBox.className = `draggable w-32 h-32 ${shapeClasses[shapes[currentShapeIndex]]} shape-transition shadow-lg shadow-primary/20`;
+  draggableBox.style.backgroundColor = colors[currentColorIndex];
+
+  // 初始居中定位 (只计算一次)
+  const containerRect = dragContainer.getBoundingClientRect();
+  const boxWidth = draggableBox.offsetWidth;
+  const boxHeight = draggableBox.offsetHeight;
+
+  // 设置初始位置
+  draggableBox.style.position = 'absolute';
+  draggableBox.style.left = `${(containerRect.width - boxWidth) / 2}px`;
+  draggableBox.style.top = `${(containerRect.height - boxHeight) / 2}px`;
+  draggableBox.style.transform = 'none';
+
+  // ================= 核心变量 =================
+  let isDragging = false;
+  let startX = 0; // 记录按下时的鼠标X
+  let startY = 0; // 记录按下时的鼠标Y
+
+  // 缓存变量：防止在 move 中重复读取 DOM 导致卡顿
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+  let limitMaxX = 0;
+  let limitMaxY = 0;
+  let containerLeft = 0;
+  let containerTop = 0;
+
+  // ================= 事件处理 =================
+
+  // 1. 按下 (MouseDown) - 准备数据
+  draggableBox.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 && e.button !== 2) return; // 只响应左键右键
+
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+
+    // --- 关键优化：在按下瞬间计算所有边界数据，拖拽时直接用 ---
+    const boxRect = draggableBox.getBoundingClientRect();
+    const cRect = dragContainer.getBoundingClientRect();
+
+    containerLeft = cRect.left;
+    containerTop = cRect.top;
+
+    // 鼠标相对于方块左上角的偏移
+    dragOffsetX = e.clientX - boxRect.left;
+    dragOffsetY = e.clientY - boxRect.top;
+
+    // 计算最大移动范围
+    limitMaxX = cRect.width - boxRect.width;
+    limitMaxY = cRect.height - boxRect.height;
+
+    // 视觉反馈
+    draggableBox.style.zIndex = '10';
+    draggableBox.style.opacity = '0.95';
+    draggableBox.style.cursor = 'grabbing';
+
+    e.preventDefault(); // 防止选中文本
+    e.stopPropagation();
+  });
+
+  // 2. 移动 (MouseMove) - 使用 RAF 更新
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+
+    // 使用 requestAnimationFrame 保证流畅度
+    requestAnimationFrame(() => {
+      // 计算相对于容器的新位置
+      let newX = e.clientX - containerLeft - dragOffsetX;
+      let newY = e.clientY - containerTop - dragOffsetY;
+
+      // 边界限制
+      newX = Math.max(0, Math.min(newX, limitMaxX));
+      newY = Math.max(0, Math.min(newY, limitMaxY));
+
+      // 应用位置
+      draggableBox.style.left = `${newX}px`;
+      draggableBox.style.top = `${newY}px`;
+    });
+  });
+
+  // 3. 松开 (MouseUp) - 区分点击和拖拽
+  document.addEventListener('mouseup', (e) => {
+    if (!isDragging) return;
+
+    isDragging = false;
+    draggableBox.style.zIndex = '1';
+    draggableBox.style.opacity = '1';
+    draggableBox.style.cursor = 'grab';
+
+    // 计算按下和松开的距离
+    const dist = Math.sqrt(Math.pow(e.clientX - startX, 2) + Math.pow(e.clientY - startY, 2));
+
+    // 如果移动距离小于3px，才判定为“点击”
+    if (dist < 3) {
+      handleBoxInteraction(e.button);
+    }
+  });
+
+  // 4. 交互逻辑 (变色/变形)
+  function handleBoxInteraction(btnCode) {
+    // 左键：变色
+    if (btnCode === 0) {
+      currentColorIndex = (currentColorIndex + 1) % colors.length;
+      draggableBox.style.backgroundColor = colors[currentColorIndex];
+      draggableBox.style.transform = 'scale(1.05)';
+      setTimeout(() => draggableBox.style.transform = 'none', 150);
+    }
+    // 右键：变形
+    else if (btnCode === 2) {
+      currentShapeIndex = (currentShapeIndex + 1) % shapes.length;
+      draggableBox.className = `draggable w-32 h-32 ${shapeClasses[shapes[currentShapeIndex]]} shape-transition shadow-lg shadow-primary/20`;
+      // 重新应用颜色，因为className重置可能会影响
+      draggableBox.style.backgroundColor = colors[currentColorIndex];
+
+      draggableBox.style.transform = 'rotate(90deg) scale(1.1)';
+      setTimeout(() => draggableBox.style.transform = 'none', 200);
+    }
+  }
+
+  // 禁用默认右键菜单
+  draggableBox.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    return false;
+  });
+}
+    
+    // 形状控制功能
+    function initFeature2() {
+      // 重置形状状态
+      currentShapeIndex = 0;
+      controllableShape.className = `w-32 h-32 bg-secondary ${shapeClasses[shapes[currentShapeIndex]]} shape-transition shadow-lg shadow-secondary/20`;
+      controllableShape.style.top = '50%';
+      controllableShape.style.left = '50%';
+      controllableShape.style.transform = 'translate(-50%, -50%)';
+      
+      // 滚轮控制
+      shapeContainer.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const currentTop = parseInt(controllableShape.style.top) || 50;
+        let newTop;
+        
+        if (e.deltaY > 0) {
+          newTop = Math.min(currentTop + 5, 90);
+        } else {
+          newTop = Math.max(currentTop - 5, 10);
+        }
+        
+        requestAnimationFrame(() => {
+          controllableShape.style.top = `${newTop}%`;
+          controllableShape.style.transform = 'translate(-50%, -50%)';
+        });
+      }, { passive: false });
+      
+      // 方向键控制
+      document.addEventListener('keydown', (e) => {
+        if (demo2.classList.contains('hidden')) return;
+        
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          currentShapeIndex = (currentShapeIndex + 1) % shapes.length;
+          updateShape();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          currentShapeIndex = (currentShapeIndex - 1 + shapes.length) % shapes.length;
+          updateShape();
+        }
+      });
+      
+      // 重置位置
+      resetShapeBtn.addEventListener('click', () => {
+        requestAnimationFrame(() => {
+          controllableShape.style.top = '50%';
+          controllableShape.style.left = '50%';
+          controllableShape.style.transform = 'translate(-50%, -50%) scale(1.2)';
+          
+          setTimeout(() => {
+            controllableShape.style.transform = 'translate(-50%, -50%)';
+          }, 200);
+        });
+      });
+    }
+    
+    // 更新形状
+    function updateShape() {
+      controllableShape.className = '';
+      controllableShape.className = `w-32 h-32 bg-secondary ${shapeClasses[shapes[currentShapeIndex]]} shape-transition shadow-lg shadow-secondary/20`;
+      
+      controllableShape.style.transform = 'translate(-50%, -50%) rotate(360deg) scale(1.1)';
+      setTimeout(() => {
+        controllableShape.style.transform = 'translate(-50%, -50%)';
+      }, 300);
+    }
+    
+    // 虚拟键盘功能（放大按钮）
+    function initFeature3() {
+      generateKeyboard();
+      
+      // 大写锁定
+      capsLockBtn.addEventListener('click', () => {
+        isCapsLocked = !isCapsLocked;
+        capsLockBtn.classList.toggle('bg-primary/10', isCapsLocked);
+        capsLockBtn.classList.toggle('text-primary', isCapsLocked);
+        updateKeyboardCase();
+      });
+      
+      // 清空文本
+      clearTextBtn.addEventListener('click', () => {
+        textInput.value = '';
+        textInput.focus();
+        
+        textInput.style.opacity = '0';
+        setTimeout(() => {
+          textInput.style.opacity = '1';
+        }, 200);
+      });
+      
+      // 文本框聚焦
+      textInput.addEventListener('click', () => {
+        textInput.focus();
+      });
+    }
+    
+    // 生成虚拟键盘（放大按钮）
+    function generateKeyboard() {
+      virtualKeyboard.innerHTML = '';
+      
+      keyboardLayout.forEach(row => {
+        row.forEach(key => {
+          const keyElement = document.createElement('button');
+          
+          if (key === ' ') {
+            // 放大空格键：增加内边距和字体大小
+            keyElement.className = 'key py-4 rounded-xl bg-gray-100 hover:bg-gray-200 transition-all-300 col-span-7 text-gray-800 font-medium text-lg';
+            keyElement.innerHTML = '<span class="text-gray-600">空格</span>';
+            keyElement.dataset.key = ' ';
+          } else if (key === 'BACKSPACE') {
+            // 放大删除键
+            keyElement.className = 'key py-4 rounded-xl bg-gray-100 hover:bg-gray-200 transition-all-300 col-span-3 text-gray-800 font-medium text-lg';
+            keyElement.innerHTML = '<i class="fa fa-backspace mr-2"></i> 删除';
+            keyElement.dataset.key = 'BACKSPACE';
+          } else {
+            // 放大普通按键：增加内边距、字体大小和字体粗细
+            keyElement.className = 'key py-4 rounded-xl bg-gray-100 hover:bg-gray-200 transition-all-300 text-gray-800 font-medium text-xl';
+            keyElement.textContent = isCapsLocked ? key.toUpperCase() : key;
+            keyElement.dataset.key = key;
+          }
+          
+          keyElement.addEventListener('click', () => {
+            handleKeyPress(keyElement.dataset.key);
+            keyElement.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+              keyElement.style.transform = 'scale(1)';
+            }, 100);
+          });
+          
+          virtualKeyboard.appendChild(keyElement);
+        });
+      });
+    }
+    
+    // 更新键盘大小写
+    function updateKeyboardCase() {
+      const keyElements = virtualKeyboard.querySelectorAll('.key');
+      keyElements.forEach(key => {
+        const keyValue = key.dataset.key;
+        if (keyValue.length === 1 && /[a-z]/.test(keyValue)) {
+          key.textContent = isCapsLocked ? keyValue.toUpperCase() : keyValue.toLowerCase();
+        }
+      });
+    }
+    
+    // 处理键盘输入
+    function handleKeyPress(key) {
+      if (key === 'BACKSPACE') {
+        textInput.value = textInput.value.slice(0, -1);
+      } else {
+        const inputText = isCapsLocked ? key.toUpperCase() : key.toLowerCase();
+        textInput.value += inputText;
+      }
+      
+      textInput.scrollTop = textInput.scrollHeight;
+      textInput.focus();
+    }
+    
+    // 十六进制转RGBA
+    function hexToRgba(hex, alpha) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    
+    // 显示演示区域
+    function showDemo(demoElement, title) {
+      demo1.classList.add('hidden');
+      demo2.classList.add('hidden');
+      demo3.classList.add('hidden');
+      
+      demoElement.classList.remove('hidden');
+      demoTitle.textContent = title;
+      demoArea.classList.remove('hidden');
+      
+      demoArea.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // 事件监听
+    feature1Btn.addEventListener('click', () => {
+      showDemo(demo1, '拖拽切换功能演示');
+    });
+    
+    feature2Btn.addEventListener('click', () => {
+      showDemo(demo2, '形状控制功能演示');
+    });
+    
+    feature3Btn.addEventListener('click', () => {
+      showDemo(demo3, '虚拟键盘功能演示');
+    });
+    
+    backBtn.addEventListener('click', () => {
+      demoArea.classList.add('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    
+    // 初始化所有功能
+    window.addEventListener('DOMContentLoaded', () => {
+      initFeature1();
+      initFeature2();
+      initFeature3();
+    });
+  </script>
+</body>
+</html>
